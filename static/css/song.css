@@ -1,0 +1,312 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #fff;
+    margin: 10px 5px 0 5px;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+button {
+    cursor: pointer;
+    outline: none;
+}
+
+i {
+    outline: none;
+    cursor: pointer;
+}
+
+h5 {
+    margin: 0;
+}
+
+main {
+    margin-top: 180px;
+}
+
+.header-card {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0 auto;
+    flex-direction: row;
+    text-align: center;
+    background-color: #fff;
+    z-index: 100;
+    border-bottom: 2px solid black;
+}
+
+.header-card h1 {
+    text-align: center;
+    margin: 0 auto;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.main-playback-controls {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding-bottom: 3px;
+}
+
+.main-playback-controls button {
+    margin: 3px;
+}
+
+.loop-button {
+    position: relative;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.speed-controls p {
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.songinfo {
+    font-weight: bold;
+}
+
+.seekingBar {
+    position: relative;
+    justify-content: center;
+}
+
+.seekingBar input {
+    width: 90%;
+    justify-self: center;
+}
+
+.looper {
+    margin: 0 auto;
+    width: 90%;
+    height: 16px;
+}
+
+.loop-segment {
+    width: 100%;
+    height: 100%;
+    left: 0%;
+}
+
+
+.stem-container {
+    margin: 0 auto;
+    border: 1px solid #000;
+    border-radius: 4px;
+    width: 90%;
+    height: auto;
+}
+
+.stemtrack {
+    border-bottom: 1px solid #000;
+    height: 100px;
+    display: flex;
+    flex-direction: row;
+}
+
+.stem {
+    flex-grow: 3;
+    width: 60%;
+    overflow: hidden;
+}
+
+.stemimage {
+    height: 100%;
+    position: relative;
+}
+
+.control {
+    margin: 0 auto;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-areas:
+    "header header header header"
+    "buttons buttons buttons buttons"
+    "volume volume volume volume"; 
+    width: 40px;
+    overflow: hidden;
+    flex-grow: 3;
+    border-right: 1px solid black;
+}
+
+.control h5 {
+    grid-area: header;
+    padding: 0;
+    padding-top: 5px;
+    padding-left: 3px;
+    text-align: center;
+    font-size: 1rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.buttons {
+    grid-area: buttons;
+    margin: 1px 0 0 0;
+    display: inline;
+    text-align: center;
+}
+
+.buttons button {
+    width: 30%;
+    height: 20px;
+}
+
+.buttons i {
+    font-size: 0.7rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.btn:focus,
+.btn:active {
+    box-shadow: none;
+}
+
+.hidden {
+    display: hidden;
+}
+
+/* .loading::before {
+    display: flex;
+    content: 'loading...';
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    width: 100%;
+    background-color: white;
+    opacity: 1;
+    animation: glowing 2s ease-in-out infinite;
+} */
+
+.trackVolumeControls {  
+    grid-area: volume;
+    margin: 0 auto;
+    width: 80%;
+    align-items: center;
+    justify-content: center;
+}
+
+.playback-rate {
+    padding: 20px 0 0 0;
+    width: 60%;
+    margin: 0 auto;
+}
+
+.playback-rate h5 {
+    text-align: center;
+}
+
+.playback-rate-label {
+    position: relative;
+    width: 100%;
+    left: 73.5%;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.stemtrack:nth-child(even) .stem {
+    background-color: rgba(166, 174, 177, 0.1);
+}
+
+footer {
+    margin: 10px 2px;
+    padding: 20px 5px;
+}
+
+/* ANIMATIONS */
+
+@keyframes glowing {
+    0% {opacity: 0.1;}
+    50% {opacity: 0.9;}
+    100% {opacity: 0.1;}
+    
+}
+
+/* RESPONSIVE MEDIA */
+
+@media screen and (max-width: 1000px) {
+    .main-playback-controls button {
+        width: 45px;
+        height: 45px;
+    }
+
+    .main-playback-controls button i {
+        display: flex;
+        margin: 0;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media screen and (max-width: 844px) {
+    .control h5 {
+        padding-top: 8px;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+    .header-card {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+
+    .header-card h5 {
+        display: none;
+    }
+
+    .control {
+        flex-grow: 4;
+    }
+
+    .break {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    
+    .main-playback-controls {
+        flex-wrap: nowrap;
+    }
+
+    .main-playback-controls button {
+        height: 30px;
+        width: 30px;
+        font-size: 0.7rem;
+    }
+
+    .control h5 {
+        padding-top: 8px;
+        text-align: left;
+        font-size: 0.7rem;
+    }
+
+    .control {
+        flex-grow: 5;
+    }
+}
+
+

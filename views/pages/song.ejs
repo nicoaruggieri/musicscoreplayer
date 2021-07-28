@@ -1,0 +1,651 @@
+<% layout('/layouts/songboilerplate') %>
+<%- include('../partials/header'); %>
+<main>
+    <div class="loading" id="loading">
+    </div>
+    <div class="stem-container">
+    <% stems.forEach((stem, i) => { %>
+        <div class="stemtrack stemtrack<%= i + 1 %>" id="stemtrack<%= i + 1 %>">
+            <div class="control" id="control<%= i + 1 %>">
+                <h5><%= i + 1 %>. <%= stem.slice(3, -4) %></h5>
+                <div class="buttons">
+                    <button id="<%= i + 1 %>" class="btn btn-sm btn-danger trackMute"><i id="<%= i + 1 %>" class="fas fa-volume-mute trackMute"></i></button>
+                    <button id="<%= i + 1 %>" class="btn btn-sm btn-warning trackSolo"><i id="<%= i + 1 %>" class="fab fa-stripe-s text-white trackSolo"></i></button>
+                </div>
+                <input type="range" class="form-range trackVolumeControls" id="<%= i + 1 %>" min="0" step="0.01" max="1" value="1">
+            </div>
+            <div class="stem stem<%= i + 1 %>" id="stem<%= i + 1 %>">
+                <div id='seek<%= i + 1 %>' class='seek'></div>
+                <img class="stemimage" src="<%= songDirectory %>/<%= images[i] %>">
+            </div>
+        </div>
+    <% }) %>
+    </div>
+</main>
+
+<footer>
+</footer>
+<script>
+    let songLength = <%= songLength %>;
+    let audioLength = songLength
+    let songTitle = '<%= songTitle %>'
+    const stems = '<%= stems %>'
+    let newStems = stems.split(',');
+    let songDirectory = '<%= songDirectory %>' + '/';
+
+    // CONSTANTS
+    var TRACK_TITLE_WIDTH = 80; // px
+    var TRACK_HEIGHT = 70 // px
+    let CLOCK_INTERVAL = 500
+
+    let mutedStems = [];
+    let soloedStems = [];
+    localStorage.clear()
+    localStorage.setItem('loopStatus', 0)
+    localStorage.setItem('playbackRate', 1)
+    localStorage.setItem('globalMuteStatus', 0)
+
+    const stemTracks = document.querySelectorAll('.stemtrack')
+    const soloBtn = document.querySelectorAll('.trackSolo')
+    const muteBtn = document.querySelectorAll('.trackMute')
+    const seeks = document.querySelectorAll('.seek')
+    const images = document.getElementsByTagName('img')
+    const play = document.getElementById('play')
+    const rewindStart = document.getElementById('rewindStart')
+    const stop = document.getElementById('stop')
+    const pause = document.getElementById('pause')
+    const globalMute = document.getElementById('globalMute')
+    const globalSolo = document.getElementById('globalSolo')
+    const loopBtnA = document.getElementById('loopA')
+    const loopToggle = document.getElementById('loopToggle')
+    const loopBtnB = document.getElementById('loopB')
+    const stemContainer = document.querySelector('.stem-container')
+    const songInfo = document.getElementById('title')
+    const controls = document.querySelectorAll('.control')
+    const audioFiles = document.getElementsByTagName('audio')
+    const playbackRateRange = document.getElementById('playbackRate')
+    const playbackSeek = document.getElementById('playbackSeek')
+    const loadingOverlay = document.getElementById('loading')
+
+    var audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    var finalStems = [];
+
+    var isStemsLoading = false;
+    var isPlaying = false;
+    var playOnLoad = false;
+
+    var seekMaxWidth = window.innerWidth - TRACK_TITLE_WIDTH;
+    var lastTimestamp = audioContext.currentTime;
+    // var songLength = 0.0;
+    var currentTime = 0.0;
+
+    newStems.forEach(function(stem, i) {
+        var seekBar = document.getElementById('seek' + (i + 1));
+        var gainNode = audioContext.createGain();
+
+        // seekBar.style.height = stemTracks[i].height + 'px';
+
+        finalStems.push({
+            stemNum: i + 1,
+            isLoaded: false,
+            track: stemTracks[i],
+            mute: muteBtn[i],
+            solo: soloBtn[i],
+            seekBar: seekBar,
+            image: images[i],
+            controls: controls[i],
+            gain: gainNode,
+            filename: songDirectory + stem
+        });
+
+    });
+
+    function requestFile(filename, callback, errCallback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', filename, true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function() {
+        audioContext.decodeAudioData(xhr.response, callback, function(error) {
+            console.log("Error decoding audio data for file " + filename + " --  " + error.err);
+            errCallback();
+        });
+    };
+    xhr.send();
+    }
+
+    // all stems loaded
+    function allStemsLoaded() {
+        var allStemsLoaded = true;
+        finalStems.forEach((s) => {
+            if (!s.isLoaded) {
+                allStemsLoaded = false;
+            }
+        })
+        return allStemsLoaded;
+    }
+
+    // load next stem
+    function loadNextStem() {
+        if (finalStems.length === 0) {
+            console.log("ERROR: loadNextStem() called with empty stems array");
+            return null;
+        }
+
+        var stemIndex = 0
+        var stem = finalStems[stemIndex];
+
+        while (stem.isLoaded) {
+            stemIndex++;
+            if (stemIndex > finalStems.length) {
+                console.log("ERROR: loadNextStem() exceeded length of stems array");
+                break;
+            }
+            stem = finalStems[stemIndex];
+        }
+
+        if (stem) {
+            loadStem(stem);
+        }
+    }
+
+    // Load Stem
+    function loadStem(stem) {
+        if (!stem) {
+            console.log("ERROR: Couldn't load null stem in loadStem()");
+            return null;
+        }
+
+        requestFile(stem.filename, function(buffer) {
+            stem.buffer = buffer;
+            if (songLength === 0.0) {
+                songLength = stem.buffer.duration;
+            }
+            var stemWidth = window.innerWidth - TRACK_TITLE_WIDTH;
+            stem.isLoaded = true;
+            updateSeekBar();
+            if (allStemsLoaded()) {
+                isStemsLoading = false;
+                loadingOverlay.classList.add('hide');
+                if (playOnLoad) {
+                    playOnLoad = false;
+                    playStems();
+                } 
+            } else {
+                loadNextStem();
+            }
+        }, function() {
+            stem.isLoaded = true;
+            stem.isError = true;
+            if (allStemsLoaded()) {
+                isStemsLoading = false;
+                loadingOverlay.classList.add('hide');
+                if (playOnLoad) {
+                    playOnLoad = false;
+                    playStems();
+                } 
+            } else {
+                loadNextStem();
+            }
+        });
+    }
+
+    // Load All Stems
+    function loadAllStems() {
+        isStemsLoading = true;
+        loadingOverlay.classList.remove('hide');
+        loadNextStem();
+    }
+
+    // Prep stems
+    function prepAllStems() {
+        finalStems.forEach((stem) => {
+            if (stem.isError) {
+                return;
+            }
+            stem.source = audioContext.createBufferSource();
+            stem.source.buffer = stem.buffer;
+            stem.source.connect(stem.gain);
+            stem.gain.connect(audioContext.destination);
+        })
+    }
+
+    /*******************************
+     * CLOCK FUNCTIONS
+     ********************************/
+    // Start Clock
+    function startClock() {
+        lastTimestamp = audioContext.currentTime;
+        setTimeout(clockTick, CLOCK_INTERVAL);
+    }
+
+    // Clock Tick
+    function clockTick() {
+        if (isPlaying) {
+            timeChange = audioContext.currentTime - lastTimestamp;
+            lastTimestamp = audioContext.currentTime;
+            currentTime = currentTime + timeChange;
+            updateSeekBar()
+            if (currentTime <= audioLength) {
+                setTimeout(clockTick, CLOCK_INTERVAL);
+            } else {
+                playPause();
+            }
+        }
+    }
+
+    /*******************************
+     * INTERFACE FUNCTIONS
+     ********************************/
+    // on Seek Bar Click
+    function onSeekBarClick(e) {
+        var wasPlaying = isPlaying;
+        if (wasPlaying) {
+            stopStems();
+        }
+        var barPos = parseFloat(e.clientX - TRACK_TITLE_WIDTH);
+        currentTime = (barPos / seekMaxWidth) * audioLength;
+        updateSeekBar();
+        if (wasPlaying) {
+            playStems();
+        }
+    }
+
+    // Parse Key Down
+    function parseKeyDown(e) {
+        switch (e.which || e.keyCode) {
+            case 32:
+                playPause();
+                break;
+
+            default:
+                return;
+        }
+        e.preventDefault();
+    }
+
+    // on Resize Window (IMAGE RESIZE HERE!)
+    function onResizeWindow() {
+        seekMaxWidth = window.innerWidth - TRACK_TITLE_WIDTH;
+
+        finalStems.forEach((stem) => {
+            if (stem.isError) {
+                return;
+            }
+            // stem.waveform.style.backgroundSize = seekMaxWidth + "px " + TRACK_HEIGHT + "px"
+        })
+        updateSeekBar();
+    }
+
+    // Update Seek Bar
+    function updateSeekBar() {
+        var songPercent = (parseFloat(currentTime) / audioLength);
+        var seekWidth = (songPercent * seekMaxWidth) + 'px';
+        finalStems.forEach(function(stem) {
+            let imageWidth = stem.image.width
+            var imageSpeed = -songPercent * imageWidth - 50
+            stem.seekBar.style.width = seekWidth;
+            playbackSeek.value = songPercent
+            stem.image.style.left = imageSpeed + 'px';
+        });
+    }
+
+    function playPause() {
+        // LOADING
+        if (isStemsLoading) {
+            playOnLoad = !playOnLoad;
+
+            // STOP
+        } else if (isPlaying) {
+            stopStems();
+            // PLAY
+        } else {
+            playStems();
+        }
+    }
+
+
+    /*******************************
+     * PLAYBACK FUNCTIONS
+     ********************************/
+    // Play Stems
+    function playStems() {
+        if (isStemsLoading) {
+            playOnLoad = true;
+            return null;
+        }
+        prepAllStems();
+        finalStems.forEach(function(s) {
+            if (s.isError) {
+                return;
+            }
+            s.source.start(0.2, currentTime);
+        });
+        isPlaying = true;
+        play.classList.remove('btn-success')
+        play.innerHTML = '<i id="pause" class="fas fa-pause">'
+        play.classList.add('btn-secondary')
+        startClock();
+    }
+
+    // Stop Stems
+    function stopStems() {
+        finalStems.forEach(function(s) {
+            if (s.isError) {
+                return;
+            }
+            s.source.stop();
+        });
+        isPlaying = false;
+        play.classList.remove('btn-secondary')
+        play.innerHTML = '<i id="play" class="fas fa-play">'
+        play.classList.add('btn-success')
+    }
+
+    /*******************************
+     * UTIL
+     ********************************/
+    // Seconds to Minutes
+    function secondsToMinutes(seconds) {
+        if (!seconds) {
+            return '';
+        }
+        var rounded_seconds = Math.round(seconds);
+        var mins = Math.floor(rounded_seconds / 60.0);
+        var secs = rounded_seconds % 60;
+        if (secs < 10) {
+            secs = "0" + secs;
+        }
+        return mins + ":" + secs;
+    }
+
+
+    /*******************************
+     * BIND EVENTS
+     ********************************/
+    // ON RESIZE WINDOW
+    window.addEventListener('resize', onResizeWindow);
+
+    // Set play button behavior
+    play.addEventListener('click', playPause)
+    document.onkeydown = parseKeyDown;
+    
+    // Set mute button behavior
+    stemContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('trackMute') == true ) {
+            let itemId = e.target.id - 1;
+            if (mutedStems.includes(itemId) == true) {
+                const index = mutedStems.indexOf(itemId)
+                mutedStems.splice(index, 1)
+            } else {
+                mutedStems.push(itemId);
+            }
+            for (i = finalStems.length; i--;) {
+                if (mutedStems.includes(i) == true) {
+                    finalStems[i].gain.gain.value = 0.0
+                    finalStems[i].controls.lastElementChild.value = 0.0
+                    finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
+                } else if (mutedStems.includes(i) == false) {
+                    finalStems[i].gain.gain.value = 1.0
+                    finalStems[i].controls.lastElementChild.value = 1.0
+                    finalStems[i].controls.style.backgroundColor = 'transparent'
+                }
+            }
+        } else if (e.target.classList.contains('trackSolo') == true) {
+            let itemId = e.target.id - 1;
+            if (soloedStems.includes(e.target.id - 1) == true) {
+                const soloIndex = soloedStems.indexOf(itemId)
+                soloedStems.splice(soloIndex, 1)
+                if (soloedStems.length >= 1) {
+                    mutedStems.push(itemId)
+                } else if (soloedStems.length == 0) {
+                    mutedStems = [];
+                }
+            } else {
+                soloedStems.push(e.target.id - 1);
+                mutedStems = [];
+                for (i = finalStems.length; i--;)
+                if (soloedStems.includes(i) == false) {
+                    mutedStems.push(i)
+                }
+            }
+            
+            for (i = finalStems.length; i--;) {
+                if (mutedStems.includes(i) == true) {
+                    finalStems[i].gain.gain.value = 0.0
+                    finalStems[i].controls.lastElementChild.value = 0.0
+                    finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
+                } else if (mutedStems.includes(i) == false) {
+                    finalStems[i].gain.gain.value = 1.0
+                    finalStems[i].controls.lastElementChild.value = 1.0
+                    finalStems[i].controls.style.backgroundColor = 'transparent'
+                }
+            }
+        }
+    })
+    
+    globalMute.addEventListener('click', function() {
+        if (mutedStems.length > 0) {
+            localStorage.setItem('mutedStemsStorage', JSON.stringify(mutedStems))
+            console.log('persisted');
+            mutedStems = [];
+            soloedStems = [];
+        } else {
+            mutedStemsHistory = JSON.parse(localStorage.getItem('mutedStemsStorage'))
+            mutedStems = mutedStemsHistory
+        }
+
+        for (i = finalStems.length; i--;) {
+            if (mutedStems.includes(i) == true) {
+                finalStems[i].gain.gain.value = 0.0
+                finalStems[i].controls.lastElementChild.value = 0.0
+                finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
+
+            } else if (mutedStems.includes(i) == false) {
+                finalStems[i].gain.gain.value = 1.0
+                finalStems[i].controls.lastElementChild.value = 1.0
+                finalStems[i].controls.style.backgroundColor = 'transparent'
+            }
+        }
+
+    });
+    
+    globalSolo.addEventListener('click', (e) => {
+        if (mutedStems.length > 0) {
+            localStorage.setItem('mutedStemsStorage', JSON.stringify(mutedStems))
+            console.log('persisted');
+            mutedStems = [];
+            soloedStems = [];
+        } else {
+            mutedStemsHistory = JSON.parse(localStorage.getItem('mutedStemsStorage'))
+            mutedStems = mutedStemsHistory
+            }
+
+        for (i = finalStems.length; i--;) {
+            if (mutedStems.includes(i) == true) {
+                finalStems[i].gain.gain.value = 0.0
+                finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
+            } else if (mutedStems.includes(i) == false) {
+                finalStems[i].gain.gain.value = 1.0
+                finalStems[i].controls.lastElementChild.value = 1.0
+                finalStems[i].controls.style.backgroundColor = 'transparent'
+            }
+        }
+        
+        for (i = finalStems.length; i--;) {
+            if (mutedStems.includes(i) == true) {
+                finalStems[i].gain.gain.value = 0.0
+                finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
+            } else if (mutedStems.includes(i) == false) {
+                finalStems[i].gain.gain.value = 1.0
+                finalStems[i].controls.lastElementChild.value = 1.0
+                finalStems[i].controls.style.backgroundColor = 'transparent'
+            }
+        }
+    })
+
+    rewindStart.addEventListener('click', (e) => {
+        var wasPlaying = isPlaying;
+        if (wasPlaying) {
+            stopStems();
+        }
+        currentTime = 0;
+        updateSeekBar();
+        if (wasPlaying) {
+            playStems();
+        }
+    })
+
+    loopBtnA.addEventListener('click', (e) => {
+        loopPositionA = finalStems[0].
+        localStorage.setItem('loopPositionA', loopPositionA)
+        if (!localStorage.getItem('loopPositionB') || localStorage.getItem('loopPositionB') < loopPositionA) {
+            loopPositionB = finalStems[0].buffer.duration
+            localStorage.setItem('loopPositionB', loopPositionB)
+        } else if (localStorage.getItem('loopPositionB') > loopPositionA) {
+            let loopPositionB = localStorage.getItem('loopPositionB')
+            for (i = finalStems.length; i--;) {
+                finalStems[i].
+                localStorage.setItem('loopStatus', 1)
+            }
+        }
+
+
+        // if (localStorage.getItem('loopPositionB') < loopPositionA) {
+        //     let loopPositionB = localStorage.getItem('loopPositionB')
+        //     for (i = audioFiles.length; i--;) {
+        //         wavesurfer[i].clearRegions({id: 0})
+        //         let region = {id: 0, start: loopPositionA, end: loopPositionA, loop: true, drag: false, resize: false, color: "rgba(255, 221, 125, 0.6)"}
+        //         wavesurfer[i].addRegion(region)
+        //         localStorage.setItem('loopStatus', 1)
+        //     }
+        // } else if (localStorage.getItem('loopPositionB') > loopPositionA) {
+        //     let loopPositionB = localStorage.getItem('loopPositionB')
+        //     for (i = wavesurfer.length; i--;) {
+        //         wavesurfer[i].clearRegions({id: 0})
+        //         let region = {id: 0, start: loopPositionA, end: loopPositionB, loop: true, drag: false, resize: false, color: "rgba(255, 221, 125, 0.6)"}
+        //         wavesurfer[i].addRegion(region)
+        //         localStorage.setItem('loopStatus', 1)
+        //     }
+        // }
+    })
+
+    playbackSeek.addEventListener('input', (e) => {
+        currentTime = e.target.value * audioLength;
+        updateSeekBar()
+        stopStems()
+        playStems()
+    })
+    
+    stemContainer.addEventListener('input', (e) => {
+        if (e.target.classList.contains('trackVolumeControls')) {
+            let trackId = e.target.id
+            let newVolume = e.target.value
+            finalStems[trackId - 1].gain.gain.value = newVolume
+        }
+    })
+
+    playbackSpeed.addEventListener('change', (e) => {
+        let newSpeed = e.target.value
+        timeChange = audioContext.currentTime - lastTimestamp;
+        lastTimestamp = audioContext.currentTime;
+        currentTime = currentTime + timeChange;
+
+        
+        if (newSpeed == 75) {
+            stopStems()
+            audioLength = songLength * 1.33
+            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            finalStems = [];
+            newStems.forEach(function(stem, i) {
+                var seekBar = document.getElementById('seek' + (i + 1));
+                var gainNode = audioContext.createGain();
+
+                seekBar.style.height = stemTracks[i].height + 'px';
+
+                finalStems.push({
+                    stemNum: i + 1,
+                    isLoaded: false,
+                    track: stemTracks[i],
+                    mute: muteBtn[i],
+                    solo: soloBtn[i],
+                    seekBar: seekBar,
+                    image: images[i],
+                    controls: controls[i],
+                    gain: gainNode,
+                    filename: songDirectory + newSpeed + '/' + stem
+                });
+            });
+            loadAllStems()
+            prepAllStems()
+            updateSeekBar()
+            playStems()
+        }
+        
+        if (newSpeed == 50) {
+            stopStems()
+            audioLength = songLength * 2
+            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            finalStems = [];
+            newStems.forEach(function(stem, i) {
+                var seekBar = document.getElementById('seek' + (i + 1));
+                var gainNode = audioContext.createGain();
+
+                seekBar.style.height = stemTracks[i].height + 'px';
+
+                finalStems.push({
+                    stemNum: i + 1,
+                    isLoaded: false,
+                    track: stemTracks[i],
+                    mute: muteBtn[i],
+                    solo: soloBtn[i],
+                    seekBar: seekBar,
+                    image: images[i],
+                    controls: controls[i],
+                    gain: gainNode,
+                    filename: songDirectory + newSpeed + '/' + stem
+                });
+            });
+            loadAllStems()
+            prepAllStems()
+            updateSeekBar()
+            playStems()
+        } else if (newSpeed = 100) {
+            stopStems()
+            audioLength = songLength;
+            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            finalStems = [];
+            newStems.forEach(function(stem, i) {
+                var seekBar = document.getElementById('seek' + (i + 1));
+                var gainNode = audioContext.createGain();
+
+                seekBar.style.height = stemTracks[i].height + 'px';
+
+                finalStems.push({
+                    stemNum: i + 1,
+                    isLoaded: false,
+                    track: stemTracks[i],
+                    mute: muteBtn[i],
+                    solo: soloBtn[i],
+                    seekBar: seekBar,
+                    image: images[i],
+                    controls: controls[i],
+                    gain: gainNode,
+                    filename: songDirectory + stem
+                });
+            });
+            loadAllStems()
+            prepAllStems()
+            updateSeekBar()
+            playStems()
+        }
+    })
+
+    
+
+    /*******************************
+     * BEGIN CODE
+     ********************************/
+    loadAllStems();
+
+</script>
+<!-- <script src="/js/stemplayer.js"></script> -->

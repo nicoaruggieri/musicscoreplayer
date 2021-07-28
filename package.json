@@ -1,0 +1,24 @@
+{
+  "name": "stemplayer",
+  "version": "1.0.0",
+  "description": "A GUI for playing audio stems.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "web": "node app.js"
+  },
+  "author": "Nico Ruggieri",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "ejs": "^3.1.6",
+    "ejs-mate": "^3.0.0",
+    "express": "^4.17.1",
+    "serve-favicon": "^2.5.0"
+  },
+  "engines": {
+    "node": "^14.16.0"
+  }
+}
