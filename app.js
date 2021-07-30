@@ -58,7 +58,12 @@ app.get('/:song', (req, res) => {
     try {
         let directoryContents = fs.readdirSync('.' + `${songDirectory}`);
         images = directoryContents.filter(file => file.endsWith('.svg'))
-        stems = directoryContents.filter(file => file.endsWith('.mp3'))
+        // stems = directoryContents.filter(file => file.endsWith('.mp3'))
+        stems = []
+        images.forEach(image => {
+            let preStem = image.replace('svg', 'mp3')
+            stems.push(preStem)
+        })        
     } catch (err) {
         console.log(err);
         res.render('pages/404')

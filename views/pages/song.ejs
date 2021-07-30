@@ -32,6 +32,7 @@
     const stems = '<%= stems %>'
     let newStems = stems.split(',');
     let songDirectory = '<%= songDirectory %>' + '/';
+    const s3bucket = 'https://boardmanband.s3.us-east-2.amazonaws.com'
 
     // CONSTANTS
     var TRACK_TITLE_WIDTH = 80; // px
@@ -95,7 +96,7 @@
             image: images[i],
             controls: controls[i],
             gain: gainNode,
-            filename: 'https://boardmanband.s3.us-east-2.amazonaws.com' + songDirectory + stem
+            filename: s3bucket + songDirectory + stem
         });
 
     });
@@ -103,6 +104,7 @@
     function requestFile(filename, callback, errCallback) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', filename, true);
+    xhr.setRequestHeader('Cache-Control', 'max-age=604800')
     xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
         audioContext.decodeAudioData(xhr.response, callback, function(error) {
@@ -572,7 +574,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: songDirectory + newSpeed + '/' + stem
+                    filename: s3bucket + songDirectory + newSpeed + '_' + stem
                 });
             });
             loadAllStems()
@@ -602,7 +604,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: songDirectory + newSpeed + '/' + stem
+                    filename: s3bucket + songDirectory + newSpeed + '_' + stem
                 });
             });
             loadAllStems()
@@ -630,7 +632,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: songDirectory + stem
+                    filename: s3bucket + songDirectory + stem
                 });
             });
             loadAllStems()
