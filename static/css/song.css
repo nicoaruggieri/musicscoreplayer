@@ -224,6 +224,14 @@ main {
     background-color: rgba(166, 174, 177, 0.1);
 }
 
+.loopLine {
+    position: absolute;
+    border-left: 2px solid blue;
+    border-right: 2px solid blue;
+    height: 20px;
+    width: 90%;
+}
+
 footer {
     margin: 10px 2px;
     padding: 20px 5px;

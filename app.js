@@ -4,7 +4,15 @@ const favicon = require('serve-favicon')
 const compression = require('compression')
 const path = require('path')
 const fs = require('fs')
-const app = express()
+const app = express();
+const shouldCompress = (req, res) => {
+    if (req.headers['x-no-compression']) {
+      // Will not compress responses, if this header is present
+      return false;
+    }
+    // Resort to standard compression
+    return compression.filter(req, res);
+  };
 let port = process.env.PORT || 5000;
 
 app.engine('ejs', ejsMate)
@@ -12,7 +20,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/views'));
 app.use(express.static(__dirname + '/static'));
 app.use(favicon(path.join(__dirname, 'static', 'img', 'favicon.ico')))
-app.use(compression());
+app.use(compression({
+    filter: shouldCompress,
+}));
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({
     limit: '50mb',

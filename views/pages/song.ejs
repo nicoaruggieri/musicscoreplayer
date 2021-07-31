@@ -38,6 +38,10 @@
 
     let mutedStems = [];
     let soloedStems = [];
+    let loopPositionA = 0
+    let loopPositionB = audioLength
+    let loopStatus = 0
+    let loopTimer
     localStorage.clear()
     localStorage.setItem('loopStatus', 0)
     localStorage.setItem('playbackRate', 1)
@@ -64,6 +68,11 @@
     const playbackRateRange = document.getElementById('playbackRate')
     const playbackSeek = document.getElementById('playbackSeek')
     const loadingOverlay = document.getElementById('loading')
+    const speedControls = document.querySelector('.speed-controls')
+
+    if( /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+        speedControls.style.display = 'hidden'
+    }
 
     var audioContext = new(window.AudioContext || window.webkitAudioContext)();
     var finalStems = [];
@@ -495,6 +504,42 @@
     })
 
     loopBtnA.addEventListener('click', (e) => {
+        loopPositionA = Math.floor((playbackSeek.value * audioLength))
+        localStorage.setItem('loopPositionA', loopPositionA)
+        localStorage.setItem('loopPositionB', audioLength)
+
+    })
+
+    loopBtnB.addEventListener('click', (e) => {
+        loopPositionB = Math.floor((playbackSeek.value * audioLength))
+        localStorage.setItem('loopPositionB', loopPositionB)
+        loopTimer = setInterval(() => {
+            stopStems()
+            currentTime = loopPositionA;
+            updateSeekBar()
+            playStems()
+        }, (loopPositionB - loopPositionA) * 1000)
+        loopStatus = 1
+        loopToggle.classList = 'btn btn-warning'
+    })
+
+    loopToggle.addEventListener('click', (e) => {
+        if (loopStatus == 1) {
+            loopStatus = 0
+            loopToggle.classList = 'btn btn-outline-warning'
+            clearInterval(loopTimer)
+        } else if (loopStatus == 0) {
+            loopStatus = 1
+            loopToggle.classList = 'btn btn-warning'
+            loopTimer = setInterval(() => {
+                stopStems()
+                currentTime = loopPositionA;
+                updateSeekBar()
+                playStems()
+            }, (loopPositionB - loopPositionA) * 1000)
+            loopStatus = 1
+            loopToggle.classList = 'btn btn-warning'
+        }
     })
 
     playbackSeek.addEventListener('input', (e) => {
