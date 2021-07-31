@@ -1,8 +1,6 @@
 <% layout('/layouts/songboilerplate') %>
 <%- include('../partials/header'); %>
 <main>
-    <div class="loading" id="loading">
-    </div>
     <div class="stem-container">
     <% stems.forEach((stem, i) => { %>
         <div class="stemtrack stemtrack<%= i + 1 %>" id="stemtrack<%= i + 1 %>">
@@ -96,7 +94,7 @@
             image: images[i],
             controls: controls[i],
             gain: gainNode,
-            filename: s3bucket + songDirectory + stem
+            filename: songDirectory + stem
         });
 
     });
@@ -167,7 +165,7 @@
             updateSeekBar();
             if (allStemsLoaded()) {
                 isStemsLoading = false;
-                loadingOverlay.classList.add('hide');
+                loadingOverlay.classList.remove('loading');
                 if (playOnLoad) {
                     playOnLoad = false;
                     playStems();
@@ -180,7 +178,7 @@
             stem.isError = true;
             if (allStemsLoaded()) {
                 isStemsLoading = false;
-                loadingOverlay.classList.add('hide');
+                loadingOverlay.classList.remove('loading');
                 if (playOnLoad) {
                     playOnLoad = false;
                     playStems();
@@ -194,7 +192,7 @@
     // Load All Stems
     function loadAllStems() {
         isStemsLoading = true;
-        loadingOverlay.classList.remove('hide');
+        loadingOverlay.classList.add('loading');
         loadNextStem();
     }
 
@@ -498,37 +496,6 @@
     })
 
     loopBtnA.addEventListener('click', (e) => {
-        loopPositionA = finalStems[0].
-        localStorage.setItem('loopPositionA', loopPositionA)
-        if (!localStorage.getItem('loopPositionB') || localStorage.getItem('loopPositionB') < loopPositionA) {
-            loopPositionB = finalStems[0].buffer.duration
-            localStorage.setItem('loopPositionB', loopPositionB)
-        } else if (localStorage.getItem('loopPositionB') > loopPositionA) {
-            let loopPositionB = localStorage.getItem('loopPositionB')
-            for (i = finalStems.length; i--;) {
-                finalStems[i].
-                localStorage.setItem('loopStatus', 1)
-            }
-        }
-
-
-        // if (localStorage.getItem('loopPositionB') < loopPositionA) {
-        //     let loopPositionB = localStorage.getItem('loopPositionB')
-        //     for (i = audioFiles.length; i--;) {
-        //         wavesurfer[i].clearRegions({id: 0})
-        //         let region = {id: 0, start: loopPositionA, end: loopPositionA, loop: true, drag: false, resize: false, color: "rgba(255, 221, 125, 0.6)"}
-        //         wavesurfer[i].addRegion(region)
-        //         localStorage.setItem('loopStatus', 1)
-        //     }
-        // } else if (localStorage.getItem('loopPositionB') > loopPositionA) {
-        //     let loopPositionB = localStorage.getItem('loopPositionB')
-        //     for (i = wavesurfer.length; i--;) {
-        //         wavesurfer[i].clearRegions({id: 0})
-        //         let region = {id: 0, start: loopPositionA, end: loopPositionB, loop: true, drag: false, resize: false, color: "rgba(255, 221, 125, 0.6)"}
-        //         wavesurfer[i].addRegion(region)
-        //         localStorage.setItem('loopStatus', 1)
-        //     }
-        // }
     })
 
     playbackSeek.addEventListener('input', (e) => {
@@ -546,7 +513,7 @@
         }
     })
 
-    playbackSpeed.addEventListener('change', (e) => {
+    playbackSpeed.addEventListener('input', (e) => {
         let newSpeed = e.target.value
         timeChange = audioContext.currentTime - lastTimestamp;
         lastTimestamp = audioContext.currentTime;
@@ -554,7 +521,10 @@
 
         
         if (newSpeed == 75) {
-            stopStems()
+            var wasPlaying = isPlaying;
+            if (wasPlaying) {
+                stopStems();
+            }
             audioLength = songLength * 1.33
             audioContext = new(window.AudioContext || window.webkitAudioContext)();
             finalStems = [];
@@ -574,7 +544,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: s3bucket + songDirectory + newSpeed + '_' + stem
+                    filename: songDirectory + newSpeed + '_' + stem
                 });
             });
             loadAllStems()
@@ -584,7 +554,10 @@
         }
         
         if (newSpeed == 50) {
-            stopStems()
+            var wasPlaying = isPlaying;
+            if (wasPlaying) {
+                stopStems();
+            }
             audioLength = songLength * 2
             audioContext = new(window.AudioContext || window.webkitAudioContext)();
             finalStems = [];
@@ -604,15 +577,18 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: s3bucket + songDirectory + newSpeed + '_' + stem
+                    filename: songDirectory + newSpeed + '_' + stem
                 });
             });
             loadAllStems()
             prepAllStems()
             updateSeekBar()
             playStems()
-        } else if (newSpeed = 100) {
-            stopStems()
+        } else if (newSpeed == 100) {
+            var wasPlaying = isPlaying;
+            if (wasPlaying) {
+                stopStems();
+            }
             audioLength = songLength;
             audioContext = new(window.AudioContext || window.webkitAudioContext)();
             finalStems = [];
@@ -632,7 +608,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: s3bucket + songDirectory + stem
+                    filename: songDirectory + stem
                 });
             });
             loadAllStems()
