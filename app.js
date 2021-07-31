@@ -78,12 +78,6 @@ app.get('/stems/:songTitle/:file', (req,res) => {
     res.sendFile(filePath)
 })
 
-app.get('/stems/:songTitle/:rate/:file', (req,res) => {
-    const { songTitle: songTitle , file: file, rate: rate} = req.params
-    var filePath = path.join(__dirname, 'stems', songTitle, rate, file);
-    res.sendFile(filePath)
-})
-
 app.get('/static/img/:file', (req,res) => {
     const {file: file} = req.params
     res.sendFile(__dirname + `/static/img/${file}`)

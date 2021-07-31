@@ -29,8 +29,8 @@
     let songTitle = '<%= songTitle %>'
     const stems = '<%= stems %>'
     let newStems = stems.split(',');
+    console.log(newStems);
     let songDirectory = '<%= songDirectory %>' + '/';
-    const s3bucket = 'https://boardmanband.s3.us-east-2.amazonaws.com'
 
     // CONSTANTS
     var TRACK_TITLE_WIDTH = 80; // px
