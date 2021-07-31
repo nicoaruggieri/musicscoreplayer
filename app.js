@@ -61,7 +61,7 @@ app.get('/:song', (req, res) => {
         // stems = directoryContents.filter(file => file.endsWith('.mp3'))
         stems = []
         images.forEach(image => {
-            let preStem = image.replace('svg', 'mp3')
+            let preStem = image.replace('svg', 'ogg')
             stems.push(preStem)
         })        
     } catch (err) {
