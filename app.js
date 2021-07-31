@@ -75,6 +75,7 @@ app.get('/:song', (req, res) => {
 app.get('/stems/:songTitle/:file', (req,res) => {
     const { songTitle: songTitle , file: file} = req.params
     var filePath = path.join(__dirname, 'stems', songTitle, file);
+    res.setHeader('Cache-Control', `max-age=31536000, no-cache`)
     res.sendFile(filePath)
 })
 
