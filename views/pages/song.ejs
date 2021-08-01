@@ -30,6 +30,7 @@
     const stems = '<%= stems %>'
     let newStems = stems.split(',');
     let songDirectory = '<%= songDirectory %>' + '/';
+    let s3bucket = 'https://boardmanband.s3.us-east-2.amazonaws.com'
 
     // CONSTANTS
     var TRACK_TITLE_WIDTH = 80; // px
@@ -70,8 +71,8 @@
     const loadingOverlay = document.getElementById('loading')
     const speedControls = document.querySelector('.speed-controls')
 
-    if( /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-        speedControls.style.display = 'hidden'
+    if( /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+        speedControls.style.display = 'none'
     }
 
     var audioContext = new(window.AudioContext || window.webkitAudioContext)();
@@ -102,7 +103,7 @@
             image: images[i],
             controls: controls[i],
             gain: gainNode,
-            filename: songDirectory + stem
+            filename: s3bucket + songDirectory + stem
         });
 
     });
@@ -588,7 +589,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: songDirectory + newSpeed + '_' + stem
+                    filename: s3bucket + songDirectory + newSpeed + '_' + stem
                 });
             });
             loadAllStems()
@@ -621,7 +622,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: songDirectory + newSpeed + '_' + stem
+                    filename: s3bucket + songDirectory + newSpeed + '_' + stem
                 });
             });
             loadAllStems()
@@ -652,7 +653,7 @@
                     image: images[i],
                     controls: controls[i],
                     gain: gainNode,
-                    filename: songDirectory + stem
+                    filename: s3bucket + songDirectory + stem
                 });
             });
             loadAllStems()
