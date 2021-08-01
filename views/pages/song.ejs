@@ -514,6 +514,10 @@
     loopBtnB.addEventListener('click', (e) => {
         loopPositionB = Math.floor((playbackSeek.value * audioLength))
         localStorage.setItem('loopPositionB', loopPositionB)
+        stopStems()
+        currentTime = loopPositionA;
+        updateSeekBar()
+        playStems()
         loopTimer = setInterval(() => {
             stopStems()
             currentTime = loopPositionA;
@@ -526,10 +530,11 @@
 
     loopToggle.addEventListener('click', (e) => {
         if (loopStatus == 1) {
+            clearInterval(loopTimer)
             loopStatus = 0
             loopToggle.classList = 'btn btn-outline-warning'
-            clearInterval(loopTimer)
         } else if (loopStatus == 0) {
+            clearInterval(loopTimer)
             loopStatus = 1
             loopToggle.classList = 'btn btn-warning'
             loopTimer = setInterval(() => {
