@@ -43,7 +43,7 @@
     let loopPositionB = audioLength
     let loopStatus = 0
     let loopTimer
-    localStorage.clear()
+    let trackVolumes = []
     localStorage.setItem('loopStatus', 0)
     localStorage.setItem('playbackRate', 1)
     localStorage.setItem('globalMuteStatus', 0)
@@ -306,9 +306,15 @@
             // STOP
         } else if (isPlaying) {
             stopStems();
+            for (i = finalStems.length; i--;) {
+                trackVolumes.push(finalStems[i].gain.gain.value)
+            }
             // PLAY
         } else {
             playStems();
+            for (i = finalStems.length; i--;) {
+                trackVolumes.push(finalStems[i].gain.gain.value)
+            }
         }
     }
 
@@ -394,8 +400,8 @@
                     finalStems[i].controls.lastElementChild.value = 0.0
                     finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
                 } else if (mutedStems.includes(i) == false) {
-                    finalStems[i].gain.gain.value = 1.0
-                    finalStems[i].controls.lastElementChild.value = 1.0
+                    finalStems[i].gain.gain.value = trackVolumes[i]
+                    finalStems[i].controls.lastElementChild.value = trackVolumes[i]
                     finalStems[i].controls.style.backgroundColor = 'transparent'
                 }
             }
@@ -424,8 +430,8 @@
                     finalStems[i].controls.lastElementChild.value = 0.0
                     finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
                 } else if (mutedStems.includes(i) == false) {
-                    finalStems[i].gain.gain.value = 1.0
-                    finalStems[i].controls.lastElementChild.value = 1.0
+                    finalStems[i].gain.gain.value = trackVolumes[i]
+                    finalStems[i].controls.lastElementChild.value = trackVolumes[i]
                     finalStems[i].controls.style.backgroundColor = 'transparent'
                 }
             }
@@ -435,9 +441,11 @@
     globalMute.addEventListener('click', function() {
         if (mutedStems.length > 0) {
             localStorage.setItem('mutedStemsStorage', JSON.stringify(mutedStems))
-            console.log('persisted');
             mutedStems = [];
             soloedStems = [];
+            for (i = finalStems.length; i--;) {
+                finalStems[i].gain.gain.value = trackVolumes[i]
+            }
         } else {
             mutedStemsHistory = JSON.parse(localStorage.getItem('mutedStemsStorage'))
             mutedStems = mutedStemsHistory
@@ -450,8 +458,8 @@
                 finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
 
             } else if (mutedStems.includes(i) == false) {
-                finalStems[i].gain.gain.value = 1.0
-                finalStems[i].controls.lastElementChild.value = 1.0
+                finalStems[i].gain.gain.value = trackVolumes[i]
+                finalStems[i].controls.lastElementChild.value = trackVolumes[i]
                 finalStems[i].controls.style.backgroundColor = 'transparent'
             }
         }
@@ -461,9 +469,11 @@
     globalSolo.addEventListener('click', (e) => {
         if (mutedStems.length > 0) {
             localStorage.setItem('mutedStemsStorage', JSON.stringify(mutedStems))
-            console.log('persisted');
             mutedStems = [];
             soloedStems = [];
+            for (i = finalStems.length; i--;) {
+                finalStems[i].gain.gain.value = trackVolumes[i]
+            }
         } else {
             mutedStemsHistory = JSON.parse(localStorage.getItem('mutedStemsStorage'))
             mutedStems = mutedStemsHistory
@@ -474,8 +484,8 @@
                 finalStems[i].gain.gain.value = 0.0
                 finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
             } else if (mutedStems.includes(i) == false) {
-                finalStems[i].gain.gain.value = 1.0
-                finalStems[i].controls.lastElementChild.value = 1.0
+                finalStems[i].gain.gain.value = trackVolumes[i]
+                finalStems[i].controls.lastElementChild.value = trackVolumes[i]
                 finalStems[i].controls.style.backgroundColor = 'transparent'
             }
         }
@@ -485,8 +495,8 @@
                 finalStems[i].gain.gain.value = 0.0
                 finalStems[i].controls.style.backgroundColor = 'rgba(255, 66, 43, 0.8)'
             } else if (mutedStems.includes(i) == false) {
-                finalStems[i].gain.gain.value = 1.0
-                finalStems[i].controls.lastElementChild.value = 1.0
+                finalStems[i].gain.gain.value = trackVolumes[i]
+                finalStems[i].controls.lastElementChild.value = trackVolumes[i]
                 finalStems[i].controls.style.backgroundColor = 'transparent'
             }
         }
@@ -560,6 +570,7 @@
             let trackId = e.target.id
             let newVolume = e.target.value
             finalStems[trackId - 1].gain.gain.value = newVolume
+            trackVolumes[trackId - 1] = parseFloat(newVolume)
         }
     })
 

@@ -188,7 +188,6 @@ main {
     content: 'loading...';
     font-size: 50px;
     width: 100%;
-    background-color: rgba(166, 174, 177, 0.1);
     opacity: 1;
     animation: glowing 2s ease-in-out infinite;
 }
